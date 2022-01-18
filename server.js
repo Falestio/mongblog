@@ -1,22 +1,23 @@
 const express = require('express')
-const articleRouter = require('./routes/article')
+const mongoose = require('mongoose')
+const Article = require('./models/article')
+const articleRouter = require('./routes/articles')
+const methodOverride = require('method-override')
 const app = express()
 
+mongoose.connect('mongodb://localhost/blog', {
+  useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true
+})
+
 app.set('view engine', 'ejs')
+app.use(express.urlencoded({ extended: false }))
+app.use(methodOverride('_method'))
 
-app.use('/articles' ,articleRouter)
-
-app.get('/', (req, res) => {
-    const articles = [
-        {
-            title: 'Test Article',
-            createdAt: Date.now(),
-            description: 'test description'
-        }
-    ]
-    res.render('index', { articles: articles })
+app.get('/', async (req, res) => {
+  const articles = await Article.find().sort({ createdAt: 'desc' })
+  res.render('articles/index', { articles: articles })
 })
 
-app.listen('6969', () => {
-    console.log('server strated at port 6969')
-})
+app.use('/articles', articleRouter)
+
+app.listen(5000)
